@@ -1,13 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
 
 get_ipython().system('pip install LogoData')
-
-
-# In[2]:
 
 
 import numpy as np
@@ -24,33 +19,9 @@ import seaborn as sns
 import plotly.express as px
 
 
-# In[3]:
 
-
-# from Bio import AlignIO
-# import LogoData
-# # Read the sequences from 'cap.fa'
-# fin = open("./data/60seq.fasta")
-# alignments = list(AlignIO.read(fin, "fasta"))
-# seqs = [str(rec.seq) for rec in alignments]
-
-# logodata = LogoData.from_seqs(seqs)
-# logooptions = LogoOptions()
-# logooptions.title = "A Logo Title"
-
-# logoformat = LogoFormat(logodata, logooptions)
-# eps = eps_formatter(logodata, logoformat)
-
-# # Save the EPS logo to a file (optional)
-# with open("sequence_logo.eps", "wb") as f:
-#     f.write(eps)
-
-
-# In[4]:
-
-
-logofile = "./data/logo60seq.txt"
-msafile = "./data/60seq.aln"
+logofile = "./data/....txt"
+msafile = "./data/....aln"
 alignment = AlignIO.read(msafile, "clustal") 
 print(f"Length of alignment file {len(alignment)} records")
 lencheck=[]
@@ -62,14 +33,11 @@ if len(set(lencheck)) > 1:
     
 dfweights0 = pd.read_csv(logofile, sep="\t", header=7) 
 dfweights0.rename(columns={"#": "position"}, inplace=True)
-# dfweights0.to_excel("./data/logo466.xlsx")
 logo_width = len(dfweights0)
 print(f"MSA columns in logofile {logo_width}")
 if lencheck[0] != logo_width:
     raise Exception(f"Mismatch between {logofile} and {msafile}")        
 
-
-# In[5]:
 
 
 SMALL_SIZE = 16
@@ -84,10 +52,8 @@ plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
-# In[6]:
 
-
-dfweights0 = pd.read_csv(logofile, sep="\t", header=7)  # with 60 records (62-2=60)
+dfweights0 = pd.read_csv(logofile, sep="\t", header=7)  
 dfweights0.rename(columns={"#": "position"}, inplace=True)
 fig, ax1 = plt.subplots(figsize=(16, 5))
 ax2 = ax1.twinx()
@@ -96,17 +62,14 @@ dfweights0.plot(x='position', y='Weight', ax=ax2, legend=False, color='r')
 ax1.set_xlabel('Position')
 ax1.set_ylabel('Entropy', color='g')
 ax2.set_ylabel('Weight', color='r')
-#plt.xlim(left=350, right=450) # to check start of the domain
 plt.show()
 
-
-# In[7]:
 
 
 # running average of n residues
 fig, ax1 = plt.subplots(figsize=(16, 5)) 
 ax2 = ax1.twinx()
-dfweights0['Entropy_mean'] = dfweights0['Entropy'].rolling(window=10, center=True).mean() # n=10 residues
+dfweights0['Entropy_mean'] = dfweights0['Entropy'].rolling(window=10, center=True).mean() 
 dfweights0.plot(x='position', y='Entropy_mean', ax=ax1, legend=False,color='g')
 dfweights0.plot(x='position', y='Weight', ax=ax2, legend=False, color='r')
 ax1.set_xlabel('Position')
@@ -115,8 +78,6 @@ ax2.set_ylabel('Weight', color='r')
 ax1.set_title('with running average of 10 residues for Entropy')
 plt.show()
 
-
-# In[8]:
 
 
 # Normalizing the weight and entropy to the range 0 to 1
@@ -136,7 +97,6 @@ ax.grid()
 plt.show()
 
 
-# In[9]:
 
 
 algorithm = rpt.Pelt(model="l1",min_size=1).fit(np.asanyarray(dfweights0["Weight"]))
@@ -148,13 +108,11 @@ plt.ylabel('Weight')
 plt.show()
 
 
-# In[10]:
+
 
 
 dfweights= dfweights0.loc[:, ["position", 'Weight']]
 
-
-# In[11]:
 
 
 #downloading of alphafold models for each sequence in an MSA
@@ -181,7 +139,6 @@ else:
     # crashes with this error if model_dir is not present
     
 for uniprot_id in uniprot_ids:
-#    file_name = os.path.join(model_dir, f"AF-{uniprot_id}-F1-model_v4.pdb")
     file_name = f"{model_dir}AF-{uniprot_id}-F1-model_v4.pdb"
     if os.path.isfile(file_name) == False:
         not_found +=1
@@ -220,10 +177,9 @@ if (dl_fail > 0):
     print("Now realign the MSA, make a new logo and start with new msafile and logofile")
 
 
-# In[12]:
 
 
-alignment = AlignIO.read(msafile, "clustal")  #alignment with 62 records
+alignment = AlignIO.read(msafile, "clustal")
 data1= []
 for record in alignment:
     for i, residue in enumerate(record.seq):
@@ -257,33 +213,25 @@ df1["Residue"] = df1["Residue"].apply(lambda x: aa_dict.get(x))
 #df1 # data frame for Uniprot ID & Residue & column number
 
 
-# In[13]:
-
 
 new_df = pd.DataFrame(columns=['weights_collection'])
 positions = df1['position']
 for position in positions:
     value = dfweights.loc[dfweights['position'] == position].drop('position', axis=1).values[0][0]
     new_df = pd.concat([new_df, pd.DataFrame({'weights_collection': [value]})], ignore_index=True)
-#new_df # mapping the weights
 
 
-# In[14]:
 
 
 df2 = pd.merge(df1, new_df, left_index=True, right_index=True, suffixes=('_df1', '_dfweights'))
-#df2 # data frame for Uniprot ID & Residue & column number & weights
-
 
 # In[15]:
-
 
 uniprot_ids = [record.id.split("|")[1] for record in alignment]
 model_dir="./data/Models/"
 parser = PDBParser()
 data = []
 for uniprot_id in uniprot_ids:
-#    file_name = os.path.join(model_dir, f"AF-{uniprot_id}-F1-model_v4.pdb")
     file_name = f"{model_dir}AF-{uniprot_id}-F1-model_v4.pdb"
     try:
         structure = parser.get_structure(f"AF-{uniprot_id}-F1-model_v4", file_name)
@@ -298,23 +246,17 @@ for uniprot_id in uniprot_ids:
         print(f"File {file_name} does not exist. Continuing to the next sequence.")
         continue
 df3 = pd.DataFrame(data)
-#df3  # data frame for Uniprot ID & Residue & B Factor
 
-
-# In[16]:
 
 
 ready_df = pd.concat([df3, df2.iloc[:, [2,3]]], axis=1)
 ready_df
 
 
-# In[17]:
-
 
 ready_df.to_csv('ready_ML.csv', index=False)
 
 
-# In[18]:
 
 
 x = ready_df['B Factor']
@@ -330,7 +272,6 @@ plt.gcf().set_size_inches(16, 5)
 plt.show()
 
 
-# In[19]:
 
 
 sns.displot(ready_df['B Factor'], kde=True, height=5, aspect=4, bins=39,color='green')
@@ -338,35 +279,21 @@ plt.title('Whole MSA positions')
 plt.show()
 
 
-# In[20]:
 
 
 print("correlation of whole MSA:",ready_df['B Factor'].corr(ready_df['weights_collection']))
-# data is skewed, so total correlation can not be used 
 
 
-# In[21]:
 
 
 filtered_RED_box = ready_df[(ready_df['weights_collection'] > 0.6) & (ready_df['B Factor'] < 50)]
-# plt.scatter(filtered_RED_box['position'], filtered_RED_box['B Factor']) 
-# #plt.xlabel('MSA position')
-# plt.ylabel('pLDDT')
-# # plt.title('Scatter Plot of the RED box', size=24)
-# plt.gca().set_facecolor('mistyrose')
-# plt.show()
 fig, ax = plt.subplots(figsize=(16,5))
 ax.scatter(filtered_RED_box['position'], filtered_RED_box['B Factor'])
 ax.set_ylabel('pLDDT')
 ax.set_facecolor('blanchedalmond')
 plt.show()
 
-# plt.hist(filtered_RED_box['position'], bins=220)
-# plt.xlabel('MSA position')
-# plt.ylabel('Frequency')
-# #plt.title('Histogram Plot of the RED box', size=24)
-# plt.gca().set_facecolor('mistyrose')
-# plt.show()
+
 fig, ax = plt.subplots(figsize=(16,5))
 ax.hist(filtered_RED_box['position'], bins=220)
 ax.set_xlabel('MSA position')
@@ -375,7 +302,6 @@ ax.set_facecolor('blanchedalmond')
 plt.show()
 
 
-# In[22]:
 
 
 dca_start = 360
@@ -383,16 +309,13 @@ dca_end = 800
 df_dcadom = ready_df[(ready_df['position'] >= dca_start) & (ready_df['position'] <= dca_end)]
 x = df_dcadom['B Factor']
 y = df_dcadom['weights_collection']
-# sns.set(rc={'figure.figsize':(20,5)})
 fig, ax = plt.subplots(figsize=(16,5))
 sns.regplot(x=x, y=y,line_kws={'color':'red'}, scatter_kws={'s': 5})
 plt.xlabel('pLDDT')
 plt.ylabel('MSA weight')
 plt.title(f'DCA domain {dca_start} to {dca_end}')
-# plt.show()
 
 
-# In[23]:
 
 
 df_dcadom=ready_df[(ready_df['position'] >= dca_start) & (ready_df['position'] <= dca_end)]
@@ -400,7 +323,6 @@ sns.displot(df_dcadom['B Factor'], kde=True, bins=39, height=5, aspect=4,color='
 plt.title(f'Histogram of DCA domain {dca_start} to {dca_end}')
 
 
-# In[24]:
 
 
 ready_df_copy = ready_df.copy()
@@ -408,13 +330,11 @@ df_360_800=ready_df_copy.loc[(ready_df_copy['position'] >= 360) & (ready_df_copy
 print("correlation of 360-800:", df_360_800['B Factor'].corr(df_360_800['weights_collection']))
 
 
-# In[25]:
 
 
 ready_df_copy = ready_df.copy()
 
 
-# In[26]:
 
 
 ready_df_copy.groupby('position')['B Factor'].mean().plot(figsize=(16,5),color='green') 
@@ -423,7 +343,6 @@ plt.ylabel('Mean pLDDT')
 # the aggregated “bfactor” column by mean based on the “position” column id in the dataframe
 
 
-# In[27]:
 
 
 fig, ax = plt.subplots(figsize=(16, 5))
@@ -433,10 +352,8 @@ ready_df_copy.groupby('position')['B Factor'].mean().plot(ax=ax2, color='b')
 ax1.set_ylabel('pLDDT', color='b')
 ax2.set_ylabel('MSA weight', color='r')
 plt.xlim(330,710)
-# plt.show()
 
 
-# In[28]:
 
 
 normalized_b_factors = (ready_df_copy.groupby('position')['B Factor'].
@@ -450,12 +367,10 @@ ax.set_ylabel('mean pLDDT * MSA weight', color='g')
 plt.xlabel("position")
 plt.xlim(330,710)
 plt.show()
-plt.plot(normalized_b_factors) #normalized Mean pLDDT plot similar to above non-normalized; for double_check
+plt.plot(normalized_b_factors) 
 
 
-# ## Statistics of good-quality residues in AF models
-
-# In[29]:
+# Statistics of good-quality residues in AF models
 
 
 limit0 = pd.DataFrame(ready_df_copy.groupby('position')['B Factor'].mean())
@@ -464,39 +379,33 @@ limits.columns = ['position', 'B Factor']
 column_values1=limits.loc[(limits['position'] >= dca_start)
                           &(limits['position'] <= dca_end)
                           & (limits['B Factor'] >= 70) ]['position'].values
-len(column_values1) #for catalytic domain limits &&& 70 < B Factor
+len(column_values1) 
 
 
-# In[30]:
 
 
 column_values2= limits.loc[(limits['position'] >= dca_start)
                            &(limits['position'] <= dca_end)
                            &(limits['B Factor'] >= 90) ]['position'].values
-len(column_values2) #for 360 <'position'<800 &&& 90 < B Factor
+len(column_values2) 
 
 
-# In[31]:
 
 
 column_values3 = limits.loc[(limits['position'] >= dca_start)
                            &(limits['position'] <= dca_end) 
                             & (limits['B Factor'] < 70) ]['position'].values
-len(column_values3) #for 360 <'position'<800 &&&  B Factor < 70
+len(column_values3) 
 
 
-# In[32]:
 
 
 column_values4= limits.loc[(limits['position'] >= dca_start)
                            &(limits['position'] <= dca_end)
                            &(limits['B Factor'] >= 95) ]['position'].values
-len(column_values4)  #supergood residues 95 < B Factor
+len(column_values4) 
 
 
-# ### Statistics of good-quality residues  for each Uniprot ID
-
-# In[33]:
 
 
 filtered_df1 = pd.DataFrame(columns=['Uniprot ID', 'Column Values'])
@@ -516,10 +425,7 @@ filtered_df1 = filtered_df1.reset_index(drop=True)
 filtered_df1['Len of Column Values no. of > 70'] = filtered_df1['Column Values'].apply(len)
 
 
-# In[34]:
 
-
-# no. of > 90
 filtered_df2 = pd.DataFrame(columns=['Uniprot ID', 'Column Values'])
 for uniprot_id in ready_df['Uniprot ID'].unique():
     column_values = ready_df.loc[(ready_df['position'] >= dca_start) 
@@ -531,10 +437,7 @@ filtered_df2 = filtered_df2.reset_index(drop=True)
 filtered_df2['Len of Column Values no. of > 90'] = filtered_df2['Column Values'].apply(len) 
 
 
-# In[35]:
 
-
-# no. of < 70
 filtered_df3 = pd.DataFrame(columns=['Uniprot ID', 'Column Values', 'Residue'])
 for uniprot_id in ready_df['Uniprot ID'].unique():
     column_values = ready_df.loc[(ready_df['position'] >= dca_start) &
@@ -553,10 +456,7 @@ filtered_df3 = filtered_df3.reset_index(drop=True)
 filtered_df3['Len of Column Values no. of < 70'] = filtered_df3['Column Values'].apply(len)
 
 
-# In[36]:
 
-
-#70…80
 filtered_df4 = pd.DataFrame(columns=['Uniprot ID', 'Column Values'])
 for uniprot_id in ready_df['Uniprot ID'].unique():
     column_values = ready_df.loc[(ready_df['position'] >= dca_start) 
@@ -568,10 +468,7 @@ filtered_df4 = filtered_df4.reset_index(drop=True)
 filtered_df4['80>Len of Column Values no. of > 70'] = filtered_df4['Column Values'].apply(len) 
 
 
-# In[37]:
 
-
-#80…90
 filtered_df5 = pd.DataFrame(columns=['Uniprot ID', 'Column Values'])
 for uniprot_id in ready_df['Uniprot ID'].unique():
     column_values = ready_df.loc[(ready_df['position'] >= dca_start) 
@@ -581,9 +478,6 @@ for uniprot_id in ready_df['Uniprot ID'].unique():
     filtered_df5 = pd.concat([filtered_df5, pd.DataFrame({'Uniprot ID': [uniprot_id], 'Column Values': [column_values]})])
 filtered_df5 = filtered_df5.reset_index(drop=True)
 filtered_df5['90>Len of Column Values no. of > 80'] = filtered_df5['Column Values'].apply(len) 
-
-
-# In[38]:
 
 
 filtered_df = pd.concat([filtered_df1.drop('Column Values', axis=1),
@@ -597,27 +491,8 @@ filtered_df.style.set_table_styles([{'selector': 'th:nth-child(8), th:nth-child(
                                     {'selector': 'th:nth-child(7)', 'props': [('background-color', 'blue')]},
                                     {'selector': 'th:nth-child(5), th:nth-child(6)',
                                      'props': [('background-color', '#87CEFA')]}])
-# !pip install dataframe_image
-# import dataframe_image as dfi
-# dfi.export(filtered_df, 'filtered_df.png', dpi=300)
-# dfi.export(filtered_df, 'filtered_df.png', dpi=300, max_rows=-1, max_cols=-1, table_conversion='matplotlib', fontsize=12)
-
-# html = filtered_df.style.set_table_styles([
-#     {'selector': 'th:nth-child(8), th:nth-child(9), th:nth-child(10)',
-#      'props': [('background-color', 'yellow')]},
-#     {'selector': 'th:nth-child(7)', 'props': [('background-color', 'blue')]},
-#     {'selector': 'th:nth-child(5), th:nth-child(6)',
-#      'props': [('background-color', '#87CEFA')]}]).to_html()
-# with open('data_frame_image.html', 'w') as f:
-#   f.write(html)
 
 
-# In[39]:
-
-
-# html = filtered_df.to_html()
-# with open('output.html', 'w') as f:
-#     f.write(html)
 
 html = filtered_df.to_html()
 html = html.replace('<table', '<table style="border-collapse: collapse;"')
@@ -625,7 +500,7 @@ with open('output.html', 'w') as f:
     f.write(html)
 
 
-# In[40]:
+
 
 
 fig = px.line(ready_df, x='position', y='B Factor', color='Uniprot ID')
@@ -633,7 +508,7 @@ fig.update_layout(legend=dict(orientation="h",yanchor="bottom", y=1.02, xanchor=
 fig.show()
 
 
-# In[41]:
+
 
 
 fig = px.line(
@@ -641,7 +516,7 @@ fig = px.line(
     x='position', 
     y='B Factor', 
     color='Uniprot ID',
-    color_discrete_sequence=px.colors.qualitative.Set2  # Professional and subtle colors
+    color_discrete_sequence=px.colors.qualitative.Set2  
 )
 fig.update_layout(
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
@@ -651,7 +526,7 @@ fig.update_layout(
 fig.show()
 
 
-# In[42]:
+
 
 
 fig, axs = plt.subplots(16, 4, figsize=(20, 80))
@@ -660,45 +535,12 @@ for i, uniprot_id in enumerate(ready_df['Uniprot ID'].unique()):
     col = i % 4
     axs[row][col].plot(ready_df[ready_df['Uniprot ID'] == uniprot_id]['position'], ready_df[ready_df['Uniprot ID'] == uniprot_id]['B Factor'])
     axs[row][col].set_title(uniprot_id)
-    axs[row][col].set_xlim([360, 800]) #suggestion by Martti
+    axs[row][col].set_xlim([360, 800])
 plt.show()
-# !pip install mpld3
-# import mpld3
-# mpld3.save_html(fig, 'my_plot.html')
-
-###
-# for uniprot_id in ready_df['Uniprot ID'].unique(): # sepratly
-#     ready_df[ready_df['Uniprot ID'] == uniprot_id].plot.line(x='position', y='B Factor')
-#     plt.title(uniprot_id)
-#     plt.show()
-# num_plots = len(ready_df['Uniprot ID'].unique())
-# print(f'The number of plots is {num_plots}.') # The number of plots is 62
 
 
-# In[43]:
 
 
-# import mpld3
-# fig, axs = plt.subplots(16, 4, figsize=(30, 120))
-# for i, uniprot_id in enumerate(ready_df['Uniprot ID'].unique()):
-#     row = i // 4
-#     col = i % 4
-#     axs[row][col].plot(ready_df[ready_df['Uniprot ID'] == uniprot_id]['position'], ready_df[ready_df['Uniprot ID'] == uniprot_id]['B Factor'])
-#     axs[row][col].set_title(uniprot_id)
-#     axs[row][col].set_xlim([360, 800]) #suggestion by Martti
-# plt.tight_layout()
-# mpld3.save_html(fig, 'my_plot.html')
 
 
-# In[44]:
-
-
-# fig, axs = plt.subplots(16, 4, figsize=(20, 80))
-# for i, uniprot_id in enumerate(ready_df['Uniprot ID'].unique()):
-#     row = i // 4
-#     col = i % 4
-#     axs[row][col].plot(ready_df[ready_df['Uniprot ID'] == uniprot_id]['position'], ready_df[ready_df['Uniprot ID'] == uniprot_id]['B Factor'])
-#     axs[row][col].set_title(uniprot_id)
-#     axs[row][col].set_xlim([360, 800]) #suggestion by Martti
-# plt.savefig('my_plot.png', dpi=300, bbox_inches='tight')
 
