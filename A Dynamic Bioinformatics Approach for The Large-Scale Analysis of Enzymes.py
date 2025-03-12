@@ -167,8 +167,7 @@ if (dl_fail > 0):
         if os.path.isfile(file_name): #if the model is there we write it into the new MSA
             new_msa.append(record)
             seqs += 1
-            #would be better if the previous had written a list of record indices 
-            #as the files were retrieved
+
 
     new_msafile = f"{msafile}.new{seqs}.fasta"
     AlignIO.write(new_msa, new_msafile, "fasta")
@@ -224,7 +223,7 @@ for position in positions:
 
 df2 = pd.merge(df1, new_df, left_index=True, right_index=True, suffixes=('_df1', '_dfweights'))
 
-# In[15]:
+
 
 uniprot_ids = [record.id.split("|")[1] for record in alignment]
 model_dir="./data/Models/"
@@ -256,8 +255,6 @@ ready_df
 ready_df.to_csv('ready_ML.csv', index=False)
 
 
-
-
 x = ready_df['B Factor']
 y = ready_df['weights_collection']
 sns.regplot(x=x, y=y,line_kws={'color':'r'}, scatter_kws={'s': 5})
@@ -271,18 +268,13 @@ plt.gcf().set_size_inches(16, 5)
 plt.show()
 
 
-
-
 sns.displot(ready_df['B Factor'], kde=True, height=5, aspect=4, bins=39,color='green')
 plt.title('Whole MSA positions')
 plt.show()
 
 
 
-
 print("correlation of whole MSA:",ready_df['B Factor'].corr(ready_df['weights_collection']))
-
-
 
 
 filtered_RED_box = ready_df[(ready_df['weights_collection'] > 0.6) & (ready_df['B Factor'] < 50)]
